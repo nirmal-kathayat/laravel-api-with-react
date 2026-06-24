@@ -1,0 +1,107 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  background: #f8fafc;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #ffd166;
+  color: #1e293b;
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes floatyB {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(10px); }
+}
+
+@keyframes spinSlow {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+/* ---- Hover effects (inline styles can't express :hover) ---- */
+.btn-primary {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(255, 107, 53, 0.42);
+}
+
+.btn-outline {
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.btn-outline:hover {
+  transform: translateY(-2px);
+  border-color: #1e293b;
+}
+
+.card-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-cat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 38px rgba(30, 41, 59, 0.12);
+}
+.card-product:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 48px rgba(30, 41, 59, 0.13);
+}
+
+.add-btn {
+  transition: background 0.2s ease;
+}
+.add-btn:hover {
+  background: #ff6b35 !important;
+}
+
+.sale-btn {
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.sale-btn:hover {
+  background: #ffd166 !important;
+  color: #1e293b !important;
+}
+
+.subscribe-btn {
+  transition: transform 0.2s ease;
+}
+.subscribe-btn:hover {
+  transform: translateY(-2px);
+}
+
+.social-link {
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.social-link:hover {
+  background: #ff6b35;
+  color: #fff !important;
+}
+
+/* ---- Scroll reveal ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
