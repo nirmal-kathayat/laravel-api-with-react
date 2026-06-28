@@ -1,3 +1,4 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import AnnouncementBar from './components/AnnouncementBar'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
@@ -9,13 +10,13 @@ import TrustBadges from './components/TrustBadges'
 import Testimonials from './components/Testimonials'
 import Newsletter from './components/Newsletter'
 import Footer from './components/Footer'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
 
-export default function App() {
-  const showAnnouncement = true
-
+function Home() {
   return (
     <div style={{ width: '100%', overflowX: 'hidden' }}>
-      {showAnnouncement && <AnnouncementBar />}
+      <AnnouncementBar />
       <Navbar cartCount={3} />
       <Hero />
       <Categories />
@@ -27,5 +28,17 @@ export default function App() {
       <Newsletter />
       <Footer />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+      </Routes>
+    </BrowserRouter>
   )
 }

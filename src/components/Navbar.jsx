@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { colors, fonts, layout } from '../theme'
 import Logo from './common/Logo'
 import { Search, Heart, Cart, User } from './common/Icons'
@@ -105,7 +106,8 @@ export default function Navbar({ cartCount = 3 }) {
               {cartCount}
             </span>
           </button>
-          <button
+          <Link
+            to="/login"
             style={{
               background: colors.ink,
               border: 'none',
@@ -116,11 +118,12 @@ export default function Navbar({ cartCount = 3 }) {
               gap: 8,
               padding: '0 14px',
               cursor: 'pointer',
+              textDecoration: 'none',
             }}
           >
             <User />
             <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Account</span>
-          </button>
+          </Link>
         </div>
       </div>
     </header>
