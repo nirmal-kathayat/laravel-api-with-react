@@ -41,9 +41,10 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/dashboard/super-admin" element={<AdminDashboard />} />
         <Route path="/dashboard/admin" element={<AdminDashboard />} />
         <Route path="/dashboard/customer" element={<CustomerDashboard />} />
+        <Route path="/account" element={<CustomerDashboard />} />
       </Routes>
     </BrowserRouter>
   )

@@ -24,7 +24,7 @@ const Eye = ({ open }) => (
 const ROLE_ROUTES = {
   'super admin': '/dashboard/super-admin',
   'admin':       '/dashboard/admin',
-  'customer':    '/dashboard/customer',
+  'customer':    '/',
 }
 
 export default function Login() {
