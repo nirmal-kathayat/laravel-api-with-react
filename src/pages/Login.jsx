@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { colors, fonts } from '../theme'
 import Logo from '../components/common/Logo'
 
@@ -21,18 +21,44 @@ const Eye = ({ open }) => (
   </svg>
 )
 
+const ROLE_ROUTES = {
+  'super admin': '/dashboard/super-admin',
+  'admin':       '/dashboard/admin',
+  'customer':    '/dashboard/customer',
+}
+
 export default function Login() {
   const [showPass, setShowPass] = useState(false)
   const [form, setForm] = useState({ email: '', password: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const navigate = useNavigate()
 
   const field = (key) => ({
     value: form[key],
     onChange: (e) => setForm((f) => ({ ...f, [key]: e.target.value })),
   })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: wire to backend API
+    setError('')
+    setLoading(true)
+    try {
+      const res = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.message || 'Login failed'); return }
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      navigate(ROLE_ROUTES[data.user.role] || '/')
+    } catch {
+      setError('Unable to connect to server')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -69,6 +95,15 @@ export default function Login() {
         <p style={{ fontSize: 14, color: colors.muted, margin: '0 0 28px' }}>
           Sign in to your Lumora account
         </p>
+
+        {error && (
+          <div style={{
+            background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10,
+            padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 4,
+          }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -111,8 +146,8 @@ export default function Login() {
             </div>
           </label>
 
-          <button type="submit" style={primaryBtn}>
-            Sign in
+          <button type="submit" disabled={loading} style={{ ...primaryBtn, opacity: loading ? 0.7 : 1 }}>
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
 

@@ -12,6 +12,9 @@ import Newsletter from './components/Newsletter'
 import Footer from './components/Footer'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
+import SuperAdminDashboard from './pages/SuperAdminDashboard'
+import AdminDashboard from './pages/AdminDashboard'
+import CustomerDashboard from './pages/CustomerDashboard'
 
 function Home() {
   return (
@@ -38,6 +41,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard/super-admin" element={<SuperAdminDashboard />} />
+        <Route path="/dashboard/admin" element={<AdminDashboard />} />
+        <Route path="/dashboard/customer" element={<CustomerDashboard />} />
       </Routes>
     </BrowserRouter>
   )
