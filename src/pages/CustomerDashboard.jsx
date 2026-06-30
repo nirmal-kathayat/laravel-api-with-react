@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { colors, fonts } from '../theme'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { getUser } from '../lib/auth'
 
 const card = {
   background: colors.white,
@@ -39,11 +40,9 @@ export default function CustomerDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (!stored) { navigate('/login'); return }
-    const parsed = JSON.parse(stored)
-    if (parsed.role !== 'customer') { navigate('/login'); return }
-    setUser(parsed)
+    const current = getUser()   // null if missing or session expired
+    if (!current || current.role !== 'customer') { navigate('/login'); return }
+    setUser(current)
   }, [navigate])
 
   if (!user) return null

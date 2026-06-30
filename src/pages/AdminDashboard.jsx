@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getUser, getToken, clearSession } from '../lib/auth'
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
 const Icon = ({ d, size = 18, stroke = 'currentColor', fill = 'none', sw = 2 }) => (
@@ -902,23 +903,20 @@ export default function AdminDashboard() {
   const [acctOpen, setAcctOpen] = useState(false)
 
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (!stored) { navigate('/login'); return }
-    const parsed = JSON.parse(stored)
-    if (!['admin', 'super admin'].includes(parsed.role)) { navigate('/login'); return }
-    setUser(parsed)
+    const current = getUser()   // null if missing or session expired
+    if (!current || !['admin', 'super admin'].includes(current.role)) { navigate('/login'); return }
+    setUser(current)
   }, [navigate])
 
   const logout = async () => {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       await fetch('http://localhost:8000/api/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
       }).catch(() => {})
     }
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearSession()
     navigate('/login')
   }
 
@@ -1013,7 +1011,7 @@ export default function AdminDashboard() {
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* Header */}
-          <header style={{ position: 'sticky', top: 0, zIndex: 15, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '15px 32px', background: 'rgba(248,250,252,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid #E8EDF3` }}>
+          <header style={{ position: 'sticky', top: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, padding: '15px 32px', background: 'rgba(248,250,252,.88)', backdropFilter: 'blur(14px)', WebkitBackdropFilter: 'blur(14px)', borderBottom: `1px solid #E8EDF3` }}>
             <div style={{ minWidth: 0 }}>
               <h1 style={{ fontFamily: F.display, fontWeight: 800, fontSize: 22, letterSpacing: '-.025em', color: C.ink, margin: 0, lineHeight: 1.1 }}>{PAGE_TITLES[page]}</h1>
               <div style={{ fontSize: 13, color: C.muted, marginTop: 2, fontWeight: 500 }}>{PAGE_SUBS[page]}</div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { colors, fonts, layout } from '../theme'
 import Logo from './common/Logo'
 import { Search, Heart, Cart } from './common/Icons'
+import { getUser, getToken, clearSession } from '../lib/auth'
 
 const iconButton = {
   position: 'relative',
@@ -30,17 +31,20 @@ export default function Navbar({ cartCount = 3 }) {
   const dropRef = useRef(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('user')
-    if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { /* ignore */ }
-    }
+    // getUser() clears and returns null if the session has expired.
+    setUser(getUser())
+
     // Re-check whenever localStorage changes (login/logout in another tab)
-    const onStorage = () => {
-      const s = localStorage.getItem('user')
-      setUser(s ? JSON.parse(s) : null)
-    }
+    const onStorage = () => setUser(getUser())
     window.addEventListener('storage', onStorage)
-    return () => window.removeEventListener('storage', onStorage)
+
+    // Also expire the session in-place if the tab stays open past the TTL.
+    const interval = setInterval(() => setUser(getUser()), 60 * 1000)
+
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      clearInterval(interval)
+    }
   }, [])
 
   // Close dropdown when clicking outside
@@ -54,15 +58,14 @@ export default function Navbar({ cartCount = 3 }) {
 
   const logout = async () => {
     setDropOpen(false)
-    const token = localStorage.getItem('token')
+    const token = getToken()
     if (token) {
       await fetch('http://localhost:8000/api/logout', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' },
       }).catch(() => {})
     }
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearSession()
     setUser(null)
     navigate('/')
   }

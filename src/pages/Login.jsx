@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { colors, fonts } from '../theme'
 import Logo from '../components/common/Logo'
+import { saveSession, roleHome } from '../lib/auth'
 
 const Eye = ({ open }) => (
   <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={colors.faint}
@@ -20,12 +21,6 @@ const Eye = ({ open }) => (
     )}
   </svg>
 )
-
-const ROLE_ROUTES = {
-  'super admin': '/dashboard/super-admin',
-  'admin':       '/dashboard/admin',
-  'customer':    '/',
-}
 
 export default function Login() {
   const [showPass, setShowPass] = useState(false)
@@ -51,9 +46,8 @@ export default function Login() {
       })
       const data = await res.json()
       if (!res.ok) { setError(data.message || 'Login failed'); return }
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      navigate(ROLE_ROUTES[data.user.role] || '/')
+      saveSession(data.token, data.user)
+      navigate(roleHome(data.user.role))
     } catch {
       setError('Unable to connect to server')
     } finally {

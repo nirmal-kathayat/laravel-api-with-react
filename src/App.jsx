@@ -12,9 +12,10 @@ import Newsletter from './components/Newsletter'
 import Footer from './components/Footer'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import AdminDashboard from './pages/AdminDashboard'
 import CustomerDashboard from './pages/CustomerDashboard'
+import ProtectedRoute from './components/ProtectedRoute'
+import GuestRoute from './components/GuestRoute'
 
 function Home() {
   return (
@@ -39,12 +40,32 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/dashboard/super-admin" element={<AdminDashboard />} />
-        <Route path="/dashboard/admin" element={<AdminDashboard />} />
-        <Route path="/dashboard/customer" element={<CustomerDashboard />} />
-        <Route path="/account" element={<CustomerDashboard />} />
+        <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+        <Route
+          path="/dashboard/admin"
+          element={
+            <ProtectedRoute allow={['admin', 'super admin']}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/customer"
+          element={
+            <ProtectedRoute allow={['customer']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute allow={['customer']}>
+              <CustomerDashboard />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   )
