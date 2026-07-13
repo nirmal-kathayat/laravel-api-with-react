@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUser, getToken, clearSession } from '../lib/auth'
+import { listProducts, createProduct, updateProduct, deleteProduct } from '../lib/products'
 
 /* ─── Icons ──────────────────────────────────────────────────────────────── */
 const Icon = ({ d, size = 18, stroke = 'currentColor', fill = 'none', sw = 2 }) => (
@@ -87,25 +88,6 @@ const AVATAR_COLORS = [
 const avatarStyle = (i) => ({ ...AVATAR_COLORS[i % AVATAR_COLORS.length], width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 12.5, flexShrink: 0 })
 
 /* ─── Static data ─────────────────────────────────────────────────────────── */
-const PRODUCTS = [
-  { id: 'p01', name: 'Aurora Linen Throw',        cat: 'Home & Living', price: 89,  compare: 110, stock: 142, status: 'Active',       sales: 1284, sku: 'LUM-AUR-001' },
-  { id: 'p02', name: 'Nimbus Wireless Headphones', cat: 'Electronics',  price: 249, compare: 299, stock: 38,  status: 'Active',       sales: 2140, sku: 'LUM-NIM-002' },
-  { id: 'p03', name: 'Terra Ceramic Vase Set',     cat: 'Home & Living', price: 64,  compare: 0,   stock: 0,   status: 'Out of Stock', sales: 690,  sku: 'LUM-TER-003' },
-  { id: 'p04', name: 'Solstice Sunglasses',        cat: 'Accessories',  price: 129, compare: 0,   stock: 87,  status: 'Active',       sales: 980,  sku: 'LUM-SOL-004' },
-  { id: 'p05', name: 'Meridian Leather Tote',      cat: 'Fashion',      price: 315, compare: 0,   stock: 14,  status: 'Active',       sales: 1560, sku: 'LUM-MER-005' },
-  { id: 'p06', name: 'Lumen Smart Lamp',           cat: 'Electronics',  price: 159, compare: 189, stock: 210, status: 'Active',       sales: 1902, sku: 'LUM-LMN-006' },
-  { id: 'p07', name: 'Cove Cashmere Scarf',        cat: 'Fashion',      price: 145, compare: 0,   stock: 6,   status: 'Active',       sales: 430,  sku: 'LUM-COV-007' },
-  { id: 'p08', name: 'Botanic Facial Serum',       cat: 'Beauty',       price: 72,  compare: 0,   stock: 320, status: 'Active',       sales: 3210, sku: 'LUM-BOT-008' },
-  { id: 'p09', name: 'Drift Yoga Mat',             cat: 'Sports',       price: 58,  compare: 0,   stock: 96,  status: 'Active',       sales: 1120, sku: 'LUM-DRF-009' },
-  { id: 'p10', name: 'Halo Scented Candle',        cat: 'Home & Living', price: 38,  compare: 0,   stock: 540, status: 'Active',       sales: 4050, sku: 'LUM-HAL-010' },
-  { id: 'p11', name: 'Atlas Trail Backpack',       cat: 'Sports',       price: 189, compare: 220, stock: 0,   status: 'Out of Stock', sales: 760,  sku: 'LUM-ATL-011' },
-  { id: 'p12', name: 'Velvet Matte Lipstick',      cat: 'Beauty',       price: 32,  compare: 0,   stock: 12,  status: 'Active',       sales: 2680, sku: 'LUM-VEL-012' },
-  { id: 'p13', name: 'Orbit Smart Watch',          cat: 'Electronics',  price: 399, compare: 0,   stock: 24,  status: 'Draft',        sales: 0,    sku: 'LUM-ORB-013' },
-  { id: 'p14', name: 'Pebble Wool Slippers',       cat: 'Fashion',      price: 79,  compare: 0,   stock: 64,  status: 'Active',       sales: 540,  sku: 'LUM-PEB-014' },
-  { id: 'p15', name: 'Cascade Water Bottle',       cat: 'Sports',       price: 42,  compare: 0,   stock: 150, status: 'Draft',        sales: 0,    sku: 'LUM-CAS-015' },
-  { id: 'p16', name: 'Lumina Pendant Necklace',    cat: 'Accessories',  price: 225, compare: 0,   stock: 31,  status: 'Active',       sales: 870,  sku: 'LUM-LUI-016' },
-]
-
 const ORDERS = [
   { id: '#LUM-4821', customer: 'Sofia Andersen',  product: 'Nimbus Wireless Headphones', count: 1, amount: '$249.00', payment: 'Paid',   status: 'Delivered',  date: 'Jun 28, 2026', initials: 'SA', ai: 0 },
   { id: '#LUM-4820', customer: 'Marcus Webb',     product: 'Meridian Leather Tote',      count: 1, amount: '$315.00', payment: 'Paid',   status: 'Shipped',    date: 'Jun 27, 2026', initials: 'MW', ai: 1 },
@@ -327,22 +309,49 @@ function Dashboard({ onGo }) {
 /* ─── Products ───────────────────────────────────────────────────────────── */
 function Products() {
   const [search, setSearch] = useState('')
-  const [catFilter, setCat] = useState('All')
   const [statusFilter, setStatus] = useState('All')
   const [sort, setSort] = useState('featured')
   const [page, setPage] = useState(1)
   const [modalOpen, setModalOpen] = useState(false)
+  const [editingProduct, setEditingProduct] = useState(null)
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const PER_PAGE = 8
 
-  let rows = PRODUCTS.filter(p =>
-    (!search || p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase())) &&
-    (catFilter === 'All' || p.cat === catFilter) &&
-    (statusFilter === 'All' || p.status === statusFilter)
+  const load = () => {
+    setLoading(true)
+    setLoadError('')
+    listProducts()
+      .then(data => setProducts(Array.isArray(data) ? data : []))
+      .catch(() => setLoadError('Unable to load products. Is the backend running?'))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
+
+  const statusOf = (p) => p.stock === 0 ? 'Out of Stock' : (p.is_active ? 'Active' : 'Draft')
+
+  const openAdd  = () => { setEditingProduct(null); setModalOpen(true) }
+  const openEdit = (p) => { setEditingProduct(p); setModalOpen(true) }
+
+  const handleDelete = async (product) => {
+    if (!window.confirm(`Delete "${product.name}"? This cannot be undone.`)) return
+    try {
+      await deleteProduct(product.id)
+      load()
+    } catch (err) {
+      alert(err.message || 'Failed to delete product')
+    }
+  }
+
+  let rows = products.filter(p =>
+    (!search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.sku || '').toLowerCase().includes(search.toLowerCase())) &&
+    (statusFilter === 'All' || statusOf(p) === statusFilter)
   )
-  if (sort === 'price-asc')   rows = [...rows].sort((a,b) => a.price - b.price)
-  if (sort === 'price-desc')  rows = [...rows].sort((a,b) => b.price - a.price)
-  if (sort === 'stock-asc')   rows = [...rows].sort((a,b) => a.stock - b.stock)
-  if (sort === 'sales-desc')  rows = [...rows].sort((a,b) => b.sales - a.sales)
+  if (sort === 'price-asc')  rows = [...rows].sort((a,b) => a.price - b.price)
+  if (sort === 'price-desc') rows = [...rows].sort((a,b) => b.price - a.price)
+  if (sort === 'stock-asc')  rows = [...rows].sort((a,b) => a.stock - b.stock)
   const totalPages = Math.ceil(rows.length / PER_PAGE)
   const paged = rows.slice((page-1)*PER_PAGE, page*PER_PAGE)
 
@@ -353,9 +362,6 @@ function Products() {
           <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: C.faint, display: 'flex' }}><svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><SearchIcon /></svg></span>
           <input value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} placeholder="Search products…" style={filterInput} />
         </div>
-        <select value={catFilter} onChange={e => { setCat(e.target.value); setPage(1) }} style={filterSelect}>
-          {['All','Electronics','Fashion','Home & Living','Beauty','Sports','Accessories'].map(o => <option key={o} value={o}>{o === 'All' ? 'All Categories' : o}</option>)}
-        </select>
         <select value={statusFilter} onChange={e => { setStatus(e.target.value); setPage(1) }} style={filterSelect}>
           {['All','Active','Out of Stock','Draft'].map(o => <option key={o} value={o}>{o === 'All' ? 'All Statuses' : o}</option>)}
         </select>
@@ -364,21 +370,28 @@ function Products() {
           <option value="price-asc">Price ↑</option>
           <option value="price-desc">Price ↓</option>
           <option value="stock-asc">Low Stock</option>
-          <option value="sales-desc">Best Selling</option>
         </select>
-        <button onClick={() => setModalOpen(true)} style={primaryBtn}><PlusIcon /> Add Product</button>
+        <button onClick={openAdd} style={primaryBtn}><PlusIcon /> Add Product</button>
       </div>
+
+      {loadError && (
+        <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>
+          {loadError}
+        </div>
+      )}
 
       <div style={card}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead><tr>
-            {['Product','Category','Price','Stock','Status','Sales','Actions'].map((h, i) => (
-              <th key={h} style={{ ...tableHead, textAlign: i === 2 ? 'right' : i === 3 ? 'center' : i === 5 ? 'right' : i === 6 ? 'right' : 'left', padding: i === 0 ? '11px 22px' : i === 6 ? '11px 22px' : '11px 12px' }}>{h}</th>
+            {['Product','Price','Stock','Status','Actions'].map((h, i) => (
+              <th key={h} style={{ ...tableHead, textAlign: i === 1 ? 'right' : i === 2 ? 'center' : i === 4 ? 'right' : 'left', padding: i === 0 ? '11px 22px' : i === 4 ? '11px 22px' : '11px 12px' }}>{h}</th>
             ))}
           </tr></thead>
           <tbody>
-            {paged.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: '60px 22px', textAlign: 'center' }}>
+            {loading ? (
+              <tr><td colSpan={5} style={{ padding: '60px 22px', textAlign: 'center', fontSize: 13.5, color: C.faint, fontWeight: 600 }}>Loading products…</td></tr>
+            ) : paged.length === 0 ? (
+              <tr><td colSpan={5} style={{ padding: '60px 22px', textAlign: 'center' }}>
                 <div style={{ color: '#CBD5E1', display: 'flex', justifyContent: 'center', marginBottom: 16 }}><ImageIcon size={40} /></div>
                 <div style={{ fontFamily: F.display, fontWeight: 800, fontSize: 18, color: C.ink, marginBottom: 6 }}>No products found</div>
                 <div style={{ fontSize: 13.5, color: C.faint, fontWeight: 500 }}>Try adjusting your search or filter criteria.</div>
@@ -387,27 +400,26 @@ function Products() {
               <tr key={row.id}>
                 <td style={{ padding: '12px 22px', borderBottom: '1px solid #F1F5F9' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 13 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 11, background: '#F1F5F9', border: `1px solid ${C.lineSoft}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C0CCDA', flexShrink: 0 }}><ImageIcon size={16} /></div>
+                    <div style={{ width: 42, height: 42, borderRadius: 11, background: '#F1F5F9', border: `1px solid ${C.lineSoft}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C0CCDA', flexShrink: 0, overflow: 'hidden' }}>
+                      {row.image ? <img src={row.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <ImageIcon size={16} />}
+                    </div>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 14, fontWeight: 700, color: C.ink, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 185 }}>{row.name}</div>
-                      <div style={{ fontSize: 11.5, color: C.faint, fontWeight: 600, fontFamily: 'ui-monospace,monospace' }}>{row.sku}</div>
+                      <div style={{ fontSize: 11.5, color: C.faint, fontWeight: 600, fontFamily: 'ui-monospace,monospace' }}>{row.sku || '—'}</div>
                     </div>
                   </div>
                 </td>
-                <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9' }}><span style={catChip(row.cat)}>{row.cat}</span></td>
                 <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9', textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: 13.5, fontWeight: 700, color: C.ink }}>${row.price}</div>
-                  {row.compare > 0 && <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: 11, color: '#CBD5E1', textDecoration: 'line-through' }}>${row.compare}</div>}
+                  <div style={{ fontFamily: 'ui-monospace,monospace', fontSize: 13.5, fontWeight: 700, color: C.ink }}>${Number(row.price).toFixed(2)}</div>
                 </td>
                 <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9', textAlign: 'center' }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: row.stock === 0 ? '#DC2626' : row.stock < 15 ? '#D97706' : C.ink }}>{row.stock}</span>
                 </td>
-                <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9' }}><span style={statusBadge(row.status)}>{row.status}</span></td>
-                <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9', textAlign: 'right', fontFamily: 'ui-monospace,monospace', fontSize: 13, fontWeight: 700, color: C.muted }}>{row.sales.toLocaleString()}</td>
+                <td style={{ padding: '12px 12px', borderBottom: '1px solid #F1F5F9' }}><span style={statusBadge(statusOf(row))}>{statusOf(row)}</span></td>
                 <td style={{ padding: '12px 22px', borderBottom: '1px solid #F1F5F9' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                    <button style={actionBtn()}><PencilIcon /></button>
-                    <button style={{ ...actionBtn(), background: '#FEF2F2', color: '#DC2626' }}><TrashIcon /></button>
+                    <button onClick={() => openEdit(row)} style={actionBtn()}><PencilIcon /></button>
+                    <button onClick={() => handleDelete(row)} style={{ ...actionBtn(), background: '#FEF2F2', color: '#DC2626' }}><TrashIcon /></button>
                   </div>
                 </td>
               </tr>
@@ -437,69 +449,156 @@ function Products() {
         </div>
       </div>
 
-      {modalOpen && <AddProductModal onClose={() => setModalOpen(false)} />}
+      {modalOpen && (
+        <ProductFormModal
+          product={editingProduct}
+          onClose={() => setModalOpen(false)}
+          onSaved={() => { setModalOpen(false); load() }}
+        />
+      )}
     </section>
   )
 }
 
-/* ─── Add Product Modal ───────────────────────────────────────────────────── */
-function AddProductModal({ onClose }) {
-  const [form, setForm] = useState({ name: '', desc: '', price: '', compare: '', sku: '', stock: '', cat: 'Fashion', status: 'Active' })
+/* ─── Add / Edit Product Modal ────────────────────────────────────────────── */
+function ProductFormModal({ product, onClose, onSaved }) {
+  const isEdit = Boolean(product)
+  const [form, setForm] = useState({
+    name:        product?.name ?? '',
+    description: product?.description ?? '',
+    price:       product?.price ?? '',
+    stock:       product?.stock ?? '',
+    sku:         product?.sku ?? '',
+    is_active:   product?.is_active ?? true,
+  })
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(product?.image ?? null)
+  const fileInputRef = useRef(null)
+  const [errors, setErrors] = useState({})
+  const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
   const labelStyle = { display: 'flex', flexDirection: 'column', gap: 6 }
   const spanStyle  = { fontSize: 13, fontWeight: 600, color: C.inkSoft }
   const inputStyle = { width: '100%', height: 42, border: `1px solid ${C.line}`, borderRadius: 11, padding: '0 13px', fontFamily: F.body, fontSize: 13.5, color: C.ink, outline: 'none', boxSizing: 'border-box' }
+  const fieldError = { fontSize: 12, fontWeight: 600, color: '#DC2626' }
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setImageFile(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
+  const handleSubmit = async () => {
+    setFormError('')
+    setErrors({})
+
+    if (!form.name.trim() || form.price === '') {
+      setFormError('Name and price are required.')
+      return
+    }
+
+    const payload = {
+      name:        form.name.trim(),
+      description: form.description.trim() || null,
+      price:       Number(form.price),
+      stock:       form.stock === '' ? 0 : Number(form.stock),
+      sku:         form.sku.trim() || null,
+      is_active:   Boolean(form.is_active),
+    }
+    if (imageFile) payload.image = imageFile
+
+    setSubmitting(true)
+    try {
+      if (isEdit) {
+        await updateProduct(product.id, payload)
+      } else {
+        await createProduct(payload)
+      }
+      onSaved()
+    } catch (err) {
+      if (err.status === 422 && err.errors) {
+        setErrors(err.errors)
+      } else {
+        setFormError(err.message || 'Something went wrong. Please try again.')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,.45)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'overlayIn .2s ease' }}>
       <div style={{ background: C.white, borderRadius: 24, width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', animation: 'modalIn .25s ease' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 28px 0' }}>
-          <h2 style={{ fontFamily: F.display, fontWeight: 800, fontSize: 21, color: C.ink, margin: 0 }}>Add Product</h2>
+          <h2 style={{ fontFamily: F.display, fontWeight: 800, fontSize: 21, color: C.ink, margin: 0 }}>{isEdit ? 'Edit Product' : 'Add Product'}</h2>
           <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: C.cloud, color: C.slate, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><XIcon /></button>
         </div>
         <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ width: '100%', height: 120, background: '#F8FAFC', border: `2px dashed ${C.line}`, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', color: C.faint }}>
-            <ImageIcon size={28} />
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Click to upload product image</span>
+          {formError && (
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 14px', fontSize: 13, color: '#DC2626' }}>
+              {formError}
+            </div>
+          )}
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{ width: '100%', height: 140, background: '#F8FAFC', border: `2px dashed ${C.line}`, borderRadius: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer', color: C.faint, overflow: 'hidden' }}
+          >
+            {imagePreview ? (
+              <img src={imagePreview} alt="Product preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <>
+                <ImageIcon size={28} />
+                <span style={{ fontSize: 13, fontWeight: 600 }}>Click to upload product image</span>
+              </>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              onChange={handleFileChange}
+              style={{ display: 'none' }}
+            />
           </div>
+          {errors.image && <span style={fieldError}>{errors.image[0]}</span>}
+
           <label style={labelStyle}><span style={spanStyle}>Product name</span>
             <input value={form.name} onChange={set('name')} placeholder="e.g. Aurora Linen Throw" style={inputStyle} />
+            {errors.name && <span style={fieldError}>{errors.name[0]}</span>}
           </label>
           <label style={labelStyle}><span style={spanStyle}>Description</span>
-            <textarea value={form.desc} onChange={set('desc')} placeholder="Short product description…" rows={3} style={{ ...inputStyle, height: 'auto', padding: '10px 13px', resize: 'vertical' }} />
+            <textarea value={form.description} onChange={set('description')} placeholder="Short product description…" rows={3} style={{ ...inputStyle, height: 'auto', padding: '10px 13px', resize: 'vertical' }} />
           </label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <label style={labelStyle}><span style={spanStyle}>Price ($)</span>
-              <input value={form.price} onChange={set('price')} placeholder="0.00" type="number" style={inputStyle} />
+              <input value={form.price} onChange={set('price')} placeholder="0.00" type="number" min="0" step="0.01" style={inputStyle} />
+              {errors.price && <span style={fieldError}>{errors.price[0]}</span>}
             </label>
-            <label style={labelStyle}><span style={spanStyle}>Compare at ($)</span>
-              <input value={form.compare} onChange={set('compare')} placeholder="0.00" type="number" style={inputStyle} />
+            <label style={labelStyle}><span style={spanStyle}>Stock</span>
+              <input value={form.stock} onChange={set('stock')} placeholder="0" type="number" min="0" style={inputStyle} />
             </label>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <label style={labelStyle}><span style={spanStyle}>SKU</span>
               <input value={form.sku} onChange={set('sku')} placeholder="LUM-XXX-000" style={inputStyle} />
-            </label>
-            <label style={labelStyle}><span style={spanStyle}>Stock</span>
-              <input value={form.stock} onChange={set('stock')} placeholder="0" type="number" style={inputStyle} />
-            </label>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-            <label style={labelStyle}><span style={spanStyle}>Category</span>
-              <select value={form.cat} onChange={set('cat')} style={{ ...inputStyle, cursor: 'pointer' }}>
-                {['Electronics','Fashion','Home & Living','Beauty','Sports','Accessories'].map(c => <option key={c}>{c}</option>)}
-              </select>
+              {errors.sku && <span style={fieldError}>{errors.sku[0]}</span>}
             </label>
             <label style={labelStyle}><span style={spanStyle}>Status</span>
-              <select value={form.status} onChange={set('status')} style={{ ...inputStyle, cursor: 'pointer' }}>
-                {['Active','Draft','Out of Stock'].map(s => <option key={s}>{s}</option>)}
+              <select value={form.is_active ? 'active' : 'inactive'} onChange={e => setForm(f => ({ ...f, is_active: e.target.value === 'active' }))} style={{ ...inputStyle, cursor: 'pointer' }}>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </label>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, padding: '0 28px 28px', justifyContent: 'flex-end' }}>
           <button onClick={onClose} style={subtleBtn}>Cancel</button>
-          <button style={primaryBtn}>Create Product</button>
+          <button onClick={handleSubmit} disabled={submitting} style={{ ...primaryBtn, opacity: submitting ? 0.7 : 1 }}>
+            {submitting ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Product'}
+          </button>
         </div>
       </div>
     </div>

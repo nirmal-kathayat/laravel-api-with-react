@@ -26,13 +26,6 @@ export const bestSellers = [
   { name: 'Solstice Polarized Shades', cat: 'Accessories', price: '$65', oldPrice: '$85', rating: '4.5', reviews: '150', badge: '-24%', img: img('1572635196237-14b3f281503f') },
 ]
 
-export const newArrivals = [
-  { name: 'Terra Ceramic Vase', cat: 'Home & Living', price: '$42', img: img('1578500494198-246f612d3b3d') },
-  { name: 'Nomad Travel Wallet', cat: 'Accessories', price: '$58', img: img('1627123424574-724758594e93') },
-  { name: 'Halo Smart Speaker', cat: 'Electronics', price: '$99', img: img('1589003077984-894e133dabab') },
-  { name: 'Verve Knit Sweater', cat: 'Fashion', price: '$78', img: img('1576566588028-4147f3842f27') },
-]
-
 export const trust = [
   { title: 'Free shipping', sub: 'On all orders over $75', Icon: Truck },
   { title: 'Secure payments', sub: '256-bit SSL encryption', Icon: Shield },
