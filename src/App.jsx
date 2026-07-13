@@ -43,7 +43,7 @@ export default function App() {
         <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
         <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
         <Route
-          path="/dashboard/admin"
+          path="/dashboard/admin/*"
           element={
             <ProtectedRoute allow={['admin', 'super admin']}>
               <AdminDashboard />
