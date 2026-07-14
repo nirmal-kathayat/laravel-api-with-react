@@ -1,19 +1,58 @@
+import { Link } from 'react-router-dom'
 import { colors, fonts } from '../theme'
 import { Heart, Plus } from './common/Icons'
 import ProductImage from './common/ProductImage'
+import { useCart } from '../context/CartContext'
+import { useWishlist } from '../context/WishlistContext'
+import { useToast } from '../context/ToastContext'
 
-export default function ProductCard({ name, cat, price, oldPrice, rating, reviews, badge, img }) {
+/** Renders a real backend product ({id, name, description?, price, stock?, image}). */
+export default function ProductCard({ product, badge }) {
+  const { addItem } = useCart()
+  const { has, toggle } = useWishlist()
+  const { push } = useToast()
+
+  const inStock = product.stock == null || product.stock > 0
+  const wished = has(product.id)
+
+  const handleWishlist = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggle(product)
+    push(wished ? 'Removed from wishlist' : 'Added to wishlist')
+  }
+
+  const handleAddToCart = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!inStock) return
+    addItem(product, 1)
+    push(`${product.name} added to cart`)
+  }
+
   return (
-    <>
-      <ProductImage src={img} alt={name} aspectRatio="1/1">
-        {badge && (
+    <Link
+      to={`/product/${product.id}`}
+      className="card-lift card-product"
+      style={{
+        display: 'block',
+        textDecoration: 'none',
+        background: colors.white,
+        border: `1px solid ${colors.lineSoft}`,
+        borderRadius: 22,
+        overflow: 'hidden',
+        boxShadow: '0 1px 2px rgba(16,24,40,.04)',
+      }}
+    >
+      <ProductImage src={product.image} alt={product.name} aspectRatio="1/1">
+        {(!inStock || badge) && (
           <span
             style={{
               position: 'absolute',
               top: 14,
               left: 14,
-              background: colors.brand,
-              color: '#fff',
+              background: !inStock ? colors.ink : colors.amber,
+              color: !inStock ? '#fff' : colors.ink,
               fontWeight: 800,
               fontSize: 11,
               letterSpacing: '.04em',
@@ -21,11 +60,12 @@ export default function ProductCard({ name, cat, price, oldPrice, rating, review
               borderRadius: 8,
             }}
           >
-            {badge}
+            {!inStock ? 'OUT OF STOCK' : badge}
           </span>
         )}
         <button
-          aria-label="Add to wishlist"
+          onClick={handleWishlist}
+          aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
           style={{
             position: 'absolute',
             top: 12,
@@ -42,48 +82,52 @@ export default function ProductCard({ name, cat, price, oldPrice, rating, review
             boxShadow: '0 4px 10px rgba(30,41,59,.12)',
           }}
         >
-          <Heart size={17} />
+          <Heart size={17} color={wished ? colors.brand : colors.ink} filled={wished} />
         </button>
       </ProductImage>
 
       <div style={{ padding: 18 }}>
-        <div style={{ fontSize: 12, color: colors.faint, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
-          {cat}
-        </div>
-        <div style={{ fontWeight: 700, fontSize: 16, color: colors.ink, marginTop: 5, lineHeight: 1.3 }}>{name}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 9 }}>
-          <span style={{ color: colors.amber, fontSize: 14, letterSpacing: '.5px' }}>★★★★★</span>
-          <span style={{ fontSize: 13, color: colors.ink, fontWeight: 700 }}>{rating}</span>
-          <span style={{ fontSize: 13, color: colors.faint, fontWeight: 600 }}>({reviews})</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-            <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 20, color: colors.ink }}>{price}</span>
-            {oldPrice && (
-              <span style={{ fontSize: 14, color: colors.faint, fontWeight: 600, textDecoration: 'line-through' }}>
-                {oldPrice}
-              </span>
-            )}
+        <div style={{ fontWeight: 700, fontSize: 16, color: colors.ink, lineHeight: 1.3 }}>{product.name}</div>
+        {product.description && (
+          <div
+            style={{
+              fontSize: 13,
+              color: colors.faint,
+              fontWeight: 500,
+              marginTop: 5,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {product.description}
           </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 }}>
+          <span style={{ fontFamily: fonts.display, fontWeight: 800, fontSize: 20, color: colors.ink }}>
+            ${Number(product.price).toFixed(2)}
+          </span>
           <button
             className="add-btn"
+            onClick={handleAddToCart}
+            disabled={!inStock}
             aria-label="Add to cart"
             style={{
               width: 40,
               height: 40,
               borderRadius: 12,
-              background: colors.ink,
+              background: inStock ? colors.ink : colors.line,
               border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
+              cursor: inStock ? 'pointer' : 'not-allowed',
             }}
           >
-            <Plus />
+            <Plus color={inStock ? '#fff' : colors.faint} />
           </button>
         </div>
       </div>
-    </>
+    </Link>
   )
 }

@@ -4,6 +4,9 @@ import { colors, fonts, layout } from '../theme'
 import Logo from './common/Logo'
 import { Search, Heart, Cart } from './common/Icons'
 import { getUser, getToken, clearSession } from '../lib/auth'
+import { useCart } from '../context/CartContext'
+import CartDrawer from './CartDrawer'
+import MobileMenu from './MobileMenu'
 
 const iconButton = {
   position: 'relative',
@@ -16,6 +19,7 @@ const iconButton = {
   alignItems: 'center',
   justifyContent: 'center',
   cursor: 'pointer',
+  textDecoration: 'none',
 }
 
 const ChevronDown = () => (
@@ -24,10 +28,20 @@ const ChevronDown = () => (
   </svg>
 )
 
-export default function Navbar({ cartCount = 3 }) {
+const Hamburger = () => (
+  <svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 6h18" /><path d="M3 12h18" /><path d="M3 18h18" />
+  </svg>
+)
+
+export default function Navbar() {
   const navigate = useNavigate()
+  const { count } = useCart()
   const [user, setUser] = useState(null)
   const [dropOpen, setDropOpen] = useState(false)
+  const [cartOpen, setCartOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const [q, setQ] = useState('')
   const dropRef = useRef(null)
 
   useEffect(() => {
@@ -70,6 +84,11 @@ export default function Navbar({ cartCount = 3 }) {
     navigate('/')
   }
 
+  const submitSearch = (e) => {
+    e.preventDefault()
+    navigate(q.trim() ? `/shop?q=${encodeURIComponent(q.trim())}` : '/shop')
+  }
+
   const initials = user
     ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : ''
@@ -97,15 +116,16 @@ export default function Navbar({ cartCount = 3 }) {
           flexWrap: 'wrap',
         }}
       >
-        <a href="#" style={{ textDecoration: 'none', flexShrink: 0 }}>
+        <Link to="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
           <Logo />
-        </a>
+        </Link>
 
-        <div
+        <form
+          onSubmit={submitSearch}
+          className="navbar-search"
           style={{
             flex: 1,
             minWidth: 220,
-            display: 'flex',
             alignItems: 'center',
             gap: 10,
             background: colors.white,
@@ -117,6 +137,8 @@ export default function Navbar({ cartCount = 3 }) {
         >
           <Search />
           <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
             placeholder="Search for products, brands and more…"
             style={{
               border: 'none',
@@ -128,40 +150,53 @@ export default function Navbar({ cartCount = 3 }) {
               width: '100%',
             }}
           />
-        </div>
+        </form>
 
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 22, flexShrink: 0 }}>
-          <a href="#categories" style={{ textDecoration: 'none', color: colors.slate, fontWeight: 600, fontSize: 14 }}>Categories</a>
-          <a href="#deals" style={{ textDecoration: 'none', color: colors.slate, fontWeight: 600, fontSize: 14 }}>Deals</a>
+        <nav className="navbar-links" style={{ alignItems: 'center', gap: 22, flexShrink: 0 }}>
+          <Link to="/shop" style={{ textDecoration: 'none', color: colors.slate, fontWeight: 600, fontSize: 14 }}>Shop</Link>
+          <Link to="/#categories" style={{ textDecoration: 'none', color: colors.slate, fontWeight: 600, fontSize: 14 }}>Categories</Link>
+          <Link to="/#deals" style={{ textDecoration: 'none', color: colors.slate, fontWeight: 600, fontSize: 14 }}>Deals</Link>
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <button style={iconButton} aria-label="Wishlist">
-            <Heart />
+          <button
+            className="navbar-hamburger"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            style={{ ...iconButton, display: undefined }}
+          >
+            <Hamburger />
           </button>
-          <button style={iconButton} aria-label="Cart">
+
+          <Link to={user ? '/account?tab=wishlist' : '/login'} style={iconButton} aria-label="Wishlist">
+            <Heart />
+          </Link>
+
+          <button onClick={() => setCartOpen(true)} style={iconButton} aria-label="Cart">
             <Cart />
-            <span
-              style={{
-                position: 'absolute',
-                top: -5,
-                right: -5,
-                background: colors.brand,
-                color: '#fff',
-                fontSize: 11,
-                fontWeight: 800,
-                minWidth: 18,
-                height: 18,
-                borderRadius: 9,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0 4px',
-                border: `2px solid ${colors.bg}`,
-              }}
-            >
-              {cartCount}
-            </span>
+            {count > 0 && (
+              <span
+                style={{
+                  position: 'absolute',
+                  top: -5,
+                  right: -5,
+                  background: colors.brand,
+                  color: '#fff',
+                  fontSize: 11,
+                  fontWeight: 800,
+                  minWidth: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0 4px',
+                  border: `2px solid ${colors.bg}`,
+                }}
+              >
+                {count}
+              </span>
+            )}
           </button>
 
           {/* ── Logged-in profile OR login button ── */}
@@ -212,9 +247,8 @@ export default function Navbar({ cartCount = 3 }) {
                   {/* Menu items */}
                   {[
                     { label: 'My Account',   to: '/account' },
-                    { label: 'My Orders',    to: '/account' },
-                    { label: 'My Wishlist',  to: '/account' },
-                    { label: 'My Reviews',   to: '/account' },
+                    { label: 'My Orders',    to: '/account?tab=orders' },
+                    { label: 'My Wishlist',  to: '/account?tab=wishlist' },
                   ].map(item => (
                     <Link
                       key={item.label}
@@ -270,6 +304,9 @@ export default function Navbar({ cartCount = 3 }) {
           )}
         </div>
       </div>
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} user={user} onLogout={logout} />
 
       <style>{`
         @keyframes navDropIn {

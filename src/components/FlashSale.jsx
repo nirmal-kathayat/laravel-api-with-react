@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { colors, fonts } from '../theme'
 import { useCountdown } from '../hooks/useCountdown'
 import Reveal from './Reveal'
@@ -85,8 +86,8 @@ export default function FlashSale({ saleHours = 32, saleMinutes = 45 }) {
           <p style={{ color: colors.faint, fontWeight: 500, fontSize: 16, margin: '16px 0 0', maxWidth: 420 }}>
             Hundreds of premium pieces at their lowest prices. Once they're gone, they're gone.
           </p>
-          <a
-            href="#"
+          <Link
+            to="/shop"
             className="sale-btn"
             style={{
               display: 'inline-block',
@@ -102,7 +103,7 @@ export default function FlashSale({ saleHours = 32, saleMinutes = 45 }) {
             }}
           >
             Grab the deals
-          </a>
+          </Link>
         </div>
 
         <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>

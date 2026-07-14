@@ -1,9 +1,10 @@
+import { Link } from 'react-router-dom'
 import { colors } from '../theme'
 
 export default function CategoryCard({ name, count, icon, tint }) {
   return (
-    <a
-      href="#"
+    <Link
+      to="/shop"
       className="card-lift card-cat"
       style={{
         textDecoration: 'none',
@@ -35,6 +36,6 @@ export default function CategoryCard({ name, count, icon, tint }) {
         <div style={{ fontWeight: 800, fontSize: 16, color: colors.ink }}>{name}</div>
         <div style={{ fontSize: 13, color: colors.faint, fontWeight: 600, marginTop: 3 }}>{count} items</div>
       </div>
-    </a>
+    </Link>
   )
 }

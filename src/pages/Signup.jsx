@@ -43,6 +43,8 @@ export default function Signup() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState(false)
 
   const field = (key) => ({
     value: form[key],
@@ -51,7 +53,21 @@ export default function Signup() {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // TODO: wire to backend API
+    setError('')
+
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.')
+      return
+    }
+    if (form.password !== form.confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+
+    // There's no /api/register endpoint yet — this is the backend module
+    // that still needs to be built, so be upfront about it instead of
+    // faking a successful account creation.
+    setNotice(true)
   }
 
   return (
@@ -88,6 +104,26 @@ export default function Signup() {
         <p style={{ fontSize: 14, color: colors.muted, margin: '0 0 28px' }}>
           Join Lumora and start shopping today
         </p>
+
+        {error && (
+          <div style={{
+            background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10,
+            padding: '10px 14px', fontSize: 13, color: '#DC2626', marginBottom: 16,
+          }}>
+            {error}
+          </div>
+        )}
+
+        {notice && (
+          <div style={{
+            background: colors.brandSoft, border: `1px solid ${colors.brand}`, borderRadius: 10,
+            padding: '12px 14px', fontSize: 13, color: colors.ink, marginBottom: 16, lineHeight: 1.5,
+          }}>
+            Account creation isn't live yet — we're still wiring up the signup API.{' '}
+            Already have an account?{' '}
+            <Link to="/login" style={{ color: colors.brand, fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>.
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

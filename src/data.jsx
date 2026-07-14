@@ -15,17 +15,6 @@ export const categories = [
   { name: 'Accessories', count: 210, icon: '⌚', tint: '#FFF8E6' },
 ]
 
-export const bestSellers = [
-  { name: 'Aria Wireless Headphones', cat: 'Electronics', price: '$129', oldPrice: '$179', rating: '4.9', reviews: '1,240', badge: 'Bestseller', img: img('1505740420928-5e560c06d30e') },
-  { name: 'Minimal Automatic Watch', cat: 'Accessories', price: '$89', oldPrice: '$120', rating: '4.8', reviews: '860', badge: '-26%', img: img('1523275335684-37898b6baf30') },
-  { name: 'Heritage Leather Backpack', cat: 'Fashion', price: '$149', oldPrice: '', rating: '4.7', reviews: '540', badge: '', img: img('1553062407-98eeb64c6a62') },
-  { name: 'Stoneware Mug Set of 4', cat: 'Home', price: '$34', oldPrice: '$45', rating: '4.9', reviews: '320', badge: 'New', img: img('1514228742587-6b1558fcca3d') },
-  { name: 'Cloud Linen Throw', cat: 'Home', price: '$59', oldPrice: '', rating: '4.6', reviews: '210', badge: '', img: img('1600369671236-e74521d4b6ad') },
-  { name: 'Arc Brass Desk Lamp', cat: 'Home', price: '$72', oldPrice: '$95', rating: '4.8', reviews: '410', badge: '', img: img('1507473885765-e6ed057f782c') },
-  { name: 'Stride Everyday Sneakers', cat: 'Fashion', price: '$110', oldPrice: '', rating: '4.7', reviews: '980', badge: 'Bestseller', img: img('1542291026-7eec264c27ff') },
-  { name: 'Solstice Polarized Shades', cat: 'Accessories', price: '$65', oldPrice: '$85', rating: '4.5', reviews: '150', badge: '-24%', img: img('1572635196237-14b3f281503f') },
-]
-
 export const trust = [
   { title: 'Free shipping', sub: 'On all orders over $75', Icon: Truck },
   { title: 'Secure payments', sub: '256-bit SSL encryption', Icon: Shield },

@@ -1,7 +1,18 @@
+import { useState } from 'react'
 import { colors, fonts, sectionStyle } from '../theme'
 import Reveal from './Reveal'
+import { useToast } from '../context/ToastContext'
 
 export default function Newsletter() {
+  const [email, setEmail] = useState('')
+  const { push } = useToast()
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    push(`Subscribed! Watch ${email} for early access.`)
+    setEmail('')
+  }
+
   return (
     <section style={sectionStyle('clamp(24px,4vw,48px) 24px')}>
       <Reveal
@@ -33,12 +44,14 @@ export default function Newsletter() {
             Join the Lumora list for early access to drops, members-only deals and styling inspiration.
           </p>
           <form
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={handleSubmit}
             style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', maxWidth: 480, margin: '0 auto' }}
           >
             <input
               type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               style={{
                 flex: 1,

@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { colors, fonts, dottedBg, sectionStyle } from '../theme'
 import { heroImage } from '../data.jsx'
 import { Truck } from './common/Icons'
@@ -79,8 +80,8 @@ export default function Hero() {
             honest pricing, and delivery that just works.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 34 }}>
-            <a
-              href="#deals"
+            <Link
+              to="/shop"
               className="btn-primary"
               style={{
                 textDecoration: 'none',
@@ -94,7 +95,7 @@ export default function Hero() {
               }}
             >
               Shop Now
-            </a>
+            </Link>
             <a
               href="#categories"
               className="btn-outline"
